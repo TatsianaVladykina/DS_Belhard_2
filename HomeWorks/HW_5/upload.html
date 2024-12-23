@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Conversational Emotional Diagnostics</title>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: url('/static/ai-background.jpg') no-repeat center center fixed;
+            background-size: cover;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start; /* Сдвигаем элементы влево */
+            justify-content: flex-start; /* Поднимаем элементы вверх */
+            height: 100vh;
+        }
+        .container {
+            background-color: rgba(84, 139, 196, 0.7); /* Полупрозрачный цвет #548bc4 */
+            padding: 40px;
+            border-radius: 10px;
+            text-align: left;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            margin: 20px;
+            width: 33%; /* Ширина контейнера */
+        }
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            color: white; /* Цвет текста */
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); /* Подводка для текста */
+        }
+        input[type="file"] {
+            display: none;
+        }
+        label {
+            background-color: #10477d; /* Темно-синий цвет */
+            color: white;
+            padding: 10px 20px;
+            font-size: 1.2em;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            transition: background-color 0.3s ease;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5); /* Подводка для текста */
+        }
+        label:hover {
+            background-color: #0056b3; /* Темно-синий цвет при наведении */
+        }
+        button {
+            background-color: #10477d; /* Темно-синий цвет */
+            color: white;
+            padding: 10px 20px;
+            font-size: 1.2em;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            margin: 10px 0;
+            transition: background-color 0.3s ease;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5); /* Подводка для текста */
+        }
+        button:hover {
+            background-color: #0056b3; /* Темно-синий цвет при наведении */
+        }
+        p, pre {
+            font-size: 1.2em;
+            margin: 10px 0;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5); /* Подводка для текста */
+        }
+        .result {
+            font-size: 1.2em; /* Размер шрифта для результата */
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5); /* Подводка для текста */
+        }
+    </style>
+    <script>
+        function uploadFile() {
+            var formData = new FormData();
+            var fileInput = document.getElementById('fileInput');
+            formData.append('file', fileInput.files[0]);
+
+            document.getElementById('uploadStatus').innerText = 'Файл загружается...';
+
+            fetch('/upload/', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('uploadStatus').innerText = 'Файл загружен';
+                document.getElementById('analyzeButton').style.display = 'block';
+                document.getElementById('fileId').value = data.id;
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        function analyzeFile() {
+            var fileId = document.getElementById('fileId').value;
+
+            document.getElementById('analysisStatus').innerText = 'Идет обработка файла...';
+
+            fetch(`/analyze/${fileId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            })
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('analysisStatus').innerText = 'Результаты обработки моделями:';
+                document.getElementById('analysisResult').innerHTML = `<p class="result">${data}</p>`;
+                document.getElementById('tryAgainButton').style.display = 'block';
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        function tryAgain() {
+            document.getElementById('uploadStatus').innerText = '';
+            document.getElementById('analyzeButton').style.display = 'none';
+            document.getElementById('analysisStatus').innerText = '';
+            document.getElementById('analysisResult').innerText = '';
+            document.getElementById('tryAgainButton').style.display = 'none';
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>ДИАГНОСТИКА ЭМОЦИОНАЛЬНОГО СОСТОЯНИЯ РАЗГОВОРОВ</h1>
+        <label for="fileInput">Загрузите файл</label>
+        <input type="file" id="fileInput" onchange="uploadFile()">
+        <p id="uploadStatus"></p>
+        <button id="analyzeButton" style="display:none;" onclick="analyzeFile()">Получить информацию</button>
+        <p id="analysisStatus"></p>
+        <div id="analysisResult"></div>
+        <button id="tryAgainButton" style="display:none;" onclick="tryAgain()">Попробовать ещё</button>
+        <input type="hidden" id="fileId">
+    </div>
+</body>
+</html>
